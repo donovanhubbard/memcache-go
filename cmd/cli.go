@@ -1,15 +1,18 @@
 package main
 
-import "fmt"
-import "flag"
-import "os"
-import "strconv"
-import "log"
+import (
+	"fmt"
+    "flag"
+	"os"
+	"strconv"
 
-import "github.com/donovanhubbard/memcache-go/client"
+	"github.com/donovanhubbard/memcache-go/client"
+	"github.com/donovanhubbard/memcache-go/utils"
+)
 
 func main(){
-	log.Println("Starting program")
+	utils.InitializeLogger()
+	utils.Sugar.Info("Starting program")
 
 	var host string
 	var port int
@@ -40,9 +43,6 @@ func main(){
 		os.Exit(1)
 	}
 
-	fmt.Println("host:["+host+"]")
-	fmt.Printf("port:[%d]\n",port)
-
 	c := client.Client {Host: host, Port: port}
 
 	var err error 
@@ -55,7 +55,7 @@ func main(){
 	}
 
 	if err != nil {
-		log.Println("Command failed")
+		utils.Sugar.Error("Command failed")
 		os.Exit(2)
 	}
 
@@ -63,5 +63,5 @@ func main(){
 		fmt.Println(returnedValue)
 	}
 
-	log.Println("Ending program")
+	utils.Sugar.Info("Ending program")
 }

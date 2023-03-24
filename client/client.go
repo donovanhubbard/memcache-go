@@ -1,12 +1,15 @@
 package client
 
-import "net"
-import "strconv"
-import "fmt"
-import "bufio"
-import "log"
-import "strings"
-import  "errors"
+import (
+	"net"
+	"strconv"
+	"fmt"
+	"bufio"
+	"strings"
+	"errors"
+
+	"github.com/donovanhubbard/memcache-go/utils"
+)
 
 type Client struct {
 	Host string
@@ -15,20 +18,20 @@ type Client struct {
 
 func (c Client) setupConnection() (net.Conn, error) {
 	socketAddress := c.Host + ":" + strconv.Itoa(c.Port)
-	log.Println("Attempting to connect to ["+ socketAddress+"]")
+	utils.Sugar.Debug("Attempting to connect to ["+ socketAddress+"]")
 	conn, err := net.Dial("tcp", socketAddress)
 
 	if err != nil{
-		log.Println("Connection failed. Error: [" + err.Error() + "]")
+		utils.Sugar.Error("Connection failed. Error: [" + err.Error() + "]")
 		return nil, err
 	}
 
-	log.Println("Connection established.")
+	utils.Sugar.Debug("Connection established.")
 	return conn, nil
 }
 
 func (c Client) ExecuteSet(key string, flags int, expiry int, value string) error {
-	log.Printf("starting ExecuteSet: key:[%s] flags:[%d] expiry:[%d] value:[%s]\n",key,flags,expiry,value)
+	utils.Sugar.Debug("starting ExecuteSet: key:[%s] flags:[%d] expiry:[%d] value:[%s]\n",key,flags,expiry,value)
 	conn, err := c.setupConnection()
 	
 	if err != nil {
@@ -36,33 +39,38 @@ func (c Client) ExecuteSet(key string, flags int, expiry int, value string) erro
 	}
 
 	cmdStr := fmt.Sprintf("set %s %d %d %d", key, flags, expiry, len(value))
-	log.Printf("Memcached command to execute: [%s]\n",cmdStr)
+	utils.Sugar.Infof("Memcached command to execute: [%s]\n",cmdStr)
 
 	fmt.Fprintf(conn, "%s\r\n",cmdStr)
 
-	log.Printf("Value: [%s]",value)
+	utils.Sugar.Infof("Value: [%s]",value)
 
 	fmt.Fprintf(conn, "%s\r\n",value)
 	
-	log.Println("Reading from connection")
+	utils.Sugar.Debug("Reading from connection")
 	status, err := bufio.NewReader(conn).ReadString('\n')
 
 	if err != nil{
-		log.Println("Failed to read from connection. Error: [" + err.Error() + "]")
+		utils.Sugar.Error("Failed to read from connection. Error: [" + err.Error() + "]")
 		return err
 	}
 
-	log.Println("Received the following response:["+status+"]")
+	response := strings.TrimSpace(status)
 
-	if strings.TrimSpace(status) != "STORED" {
-		return errors.New("failed to set value. "+strings.TrimSpace(status))
+	utils.Sugar.Info("Received the following response:["+response+"]")
+
+	if response != "STORED" {
+		err := errors.New("failed to set value. " + response)
+		utils.Sugar.Error(err)
+		return err
 	}
 	conn.Close()
+	utils.Sugar.Debug("Exiting ExecuteSet")
 	return nil
 }
 
 func (c Client) ExecuteGet(key string) (string,error) {
-	log.Printf("starting ExecutGet: key:[%s]\n",key)
+	utils.Sugar.Debugf("starting ExecuteGet: key:[%s]\n",key)
 	conn, err := c.setupConnection()
 	
 	if err != nil {
@@ -70,26 +78,27 @@ func (c Client) ExecuteGet(key string) (string,error) {
 	}
 
 	cmdStr := fmt.Sprintf("get %s", key)
-	log.Printf("Memcached command to execute: [%s]\n",cmdStr)
+	utils.Sugar.Infof("Memcached command to execute: [%s]\n",cmdStr)
 
 	fmt.Fprintf(conn, "%s\r\n", cmdStr)
 	
-	log.Println("Reading from connection")
+	utils.Sugar.Debug("Reading from connection")
 	response, err := bufio.NewReader(conn).ReadString('\n')
 	response = strings.TrimSpace(response)
 
 	if err != nil{
-		log.Println("Failed to read from connection. Error: [" + err.Error() + "]")
+		utils.Sugar.Error("Failed to read from connection. Error: [" + err.Error() + "]")
 		conn.Close()
 		return "",err
 	}
 
-	log.Println("Received the following response:["+response+"]")
+	utils.Sugar.Info("Received the following response:["+response+"]")
 
 	if  response == "END" {
-		log.Println("Failed to find the specified key")
+		utils.Sugar.Error("Failed to find the specified key")
 		return "", errors.New("specified key not found")
 	}
 	conn.Close()
+	utils.Sugar.Debugf("Exiting ExecuteGet. Returning [%s]", response)
 	return response,nil
 }
