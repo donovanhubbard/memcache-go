@@ -1,0 +1,13 @@
+name: Automated-Testing
+on:
+  push:
+    branches:
+      - main
+jobs:
+  check-bats-version:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - run: go fmt client/*
+      - run: go fmt cmd/*
+      - run: go fmt utils/*
