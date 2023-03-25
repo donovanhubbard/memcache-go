@@ -64,14 +64,20 @@ func (c Client) ExecuteSet(key string, flags int, expiry int, value string) erro
 		utils.Sugar.Error(err)
 		return err
 	}
+	fmt.Println("Success")
 	conn.Close()
 	utils.Sugar.Debug("Exiting ExecuteSet")
 	return nil
 }
 
 func (c Client) ExecuteGet(key string) (string,error) {
+	var response, value string
+	var reader *bufio.Reader
+	var err error
+	var conn net.Conn
+
 	utils.Sugar.Debugf("starting ExecuteGet: key:[%s]\n",key)
-	conn, err := c.setupConnection()
+	conn, err = c.setupConnection()
 	
 	if err != nil {
 		return "",err
@@ -82,23 +88,59 @@ func (c Client) ExecuteGet(key string) (string,error) {
 
 	fmt.Fprintf(conn, "%s\r\n", cmdStr)
 	
-	utils.Sugar.Debug("Reading from connection")
-	response, err := bufio.NewReader(conn).ReadString('\n')
-	response = strings.TrimSpace(response)
+	reader = bufio.NewReader(conn)
 
-	if err != nil{
-		utils.Sugar.Error("Failed to read from connection. Error: [" + err.Error() + "]")
+	response, err = readFromBuffer(reader)
+
+	if err != nil {
 		conn.Close()
-		return "",err
+		return "", err
 	}
-
-	utils.Sugar.Info("Received the following response:["+response+"]")
 
 	if  response == "END" {
 		utils.Sugar.Error("Failed to find the specified key")
 		return "", errors.New("specified key not found")
 	}
+
+	value = ""
+
+	response, err = readFromBuffer(reader)
+
+	if err != nil {
+		conn.Close()
+		return "", err
+	}
+
+	for strings.TrimSpace(response) != "END" {
+		value += response
+		
+		response, err = readFromBuffer(reader)
+
+		if err != nil {
+			conn.Close()
+			return "", err
+		}
+		
+	}
+
 	conn.Close()
-	utils.Sugar.Debugf("Exiting ExecuteGet. Returning [%s]", response)
-	return response,nil
+
+	value = strings.TrimSpace(value)
+
+	utils.Sugar.Debugf("Exiting ExecuteGet. Returning [%s]", value)
+	return value, nil
+}
+
+func readFromBuffer(reader *bufio.Reader) (string, error){
+	utils.Sugar.Debug("Reading from connection")
+	response, err := reader.ReadString('\n')
+
+	if err != nil{
+		utils.Sugar.Error("Failed to read from connection. Error: [" + err.Error() + "]")
+		return "",err
+	}
+
+	utils.Sugar.Info("Received the following response:["+response+"]")
+
+	return response, nil
 }
