@@ -1,8 +1,8 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-    "flag"
 	"os"
 	"strconv"
 
@@ -10,7 +10,7 @@ import (
 	"github.com/donovanhubbard/memcache-go/utils"
 )
 
-func main(){
+func main() {
 	utils.InitializeLogger()
 	utils.Sugar.Info("Starting program")
 
@@ -24,10 +24,9 @@ func main(){
 
 	var err error
 
-
 	flag.StringVar(&host, "host", "localhost", "hostname or ip address of the memcached server")
-	flag.IntVar(&port,"port",11211,"memcached port. Default: 11211")
-	flag.StringVar(&command,"command","","memcached command to execute: set, get")
+	flag.IntVar(&port, "port", 11211, "memcached port. Default: 11211")
+	flag.StringVar(&command, "command", "", "memcached command to execute: set, get")
 	flag.IntVar(&expiry, "expiry", 0, "How many seconds until the key is evicted. 0 never expires. unix timestamp required for values over 30 days")
 	flag.IntVar(&flags, "flags", 0, "flags to set alongside the key")
 	flag.StringVar(&key, "key", "", "Key to find the value again")
@@ -37,7 +36,7 @@ func main(){
 
 	if os.Getenv("HOST") != "" {
 		host = os.Getenv("HOST")
-		utils.Sugar.Debugf("Using environment variable HOST to set host=[%s]",host)
+		utils.Sugar.Debugf("Using environment variable HOST to set host=[%s]", host)
 	}
 
 	if os.Getenv("PORT") != "" {
@@ -47,43 +46,43 @@ func main(){
 			os.Stderr.WriteString("Invalid port number. Must be an integer")
 			os.Exit(1)
 		}
-		utils.Sugar.Debugf("Using environment variable PORT to set port=[%d]",port)
+		utils.Sugar.Debugf("Using environment variable PORT to set port=[%d]", port)
 	}
 
-	utils.Sugar.Debugf("host=[%s]",host)
-	utils.Sugar.Debugf("port=[%d]",port)
+	utils.Sugar.Debugf("host=[%s]", host)
+	utils.Sugar.Debugf("port=[%d]", port)
 
 	if host == "" {
 		os.Stderr.WriteString("Missing mandatory argument '-host'\n")
 		os.Exit(1)
 	}
 
-	if port < 1 || port > 65535{
-		os.Stderr.WriteString("Invalid port number '"+strconv.Itoa(port)+"'\n")
+	if port < 1 || port > 65535 {
+		os.Stderr.WriteString("Invalid port number '" + strconv.Itoa(port) + "'\n")
 		os.Exit(1)
 	}
 
-	c := client.Client {Host: host, Port: port}
+	c := client.Client{Host: host, Port: port}
 
 	var returnedValue string
 
 	if command == "set" {
 		err = c.ExecuteSet(key, flags, expiry, value)
-	}else if command == "get" {
+	} else if command == "get" {
 		returnedValue, err = c.ExecuteGet(key)
-	
+
 		if err != nil {
-			os.Stderr.WriteString("Failed to find key: ["+key+"]\n")
+			os.Stderr.WriteString("Failed to find key: [" + key + "]\n")
 		}
 	}
 
 	if err != nil {
 		utils.Sugar.Error("Command failed")
-		os.Stderr.WriteString(err.Error()+"\n")
+		os.Stderr.WriteString(err.Error() + "\n")
 		os.Exit(2)
 	}
 
-	if returnedValue != ""{
+	if returnedValue != "" {
 		fmt.Println(returnedValue)
 	}
 

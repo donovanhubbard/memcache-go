@@ -51,21 +51,21 @@ func InitializeLogger() {
 			"levelEncoder": "lowercase"
 		}
 	  }`)
-  
-	  var cfg zap.Config
-	  if err := json.Unmarshal(rawJSON, &cfg); err != nil {
-		  panic(err)
-	  }
 
-	  cfg.Level.SetLevel(getLogLevel())
+	var cfg zap.Config
+	if err := json.Unmarshal(rawJSON, &cfg); err != nil {
+		panic(err)
+	}
 
-	  cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	  cfg.EncoderConfig.TimeKey = "timestamp"
+	cfg.Level.SetLevel(getLogLevel())
 
-	  Logger := zap.Must(cfg.Build())
-	  defer Logger.Sync()
+	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	cfg.EncoderConfig.TimeKey = "timestamp"
 
-	  Sugar = Logger.Sugar()
-  
-	  Sugar.Info("Logging initialized")
+	Logger := zap.Must(cfg.Build())
+	defer Logger.Sync()
+
+	Sugar = Logger.Sugar()
+
+	Sugar.Info("Logging initialized")
 }
