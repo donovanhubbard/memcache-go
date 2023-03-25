@@ -71,7 +71,7 @@ func main(){
 		err = c.ExecuteSet(key, flags, expiry, value)
 	}else if command == "get" {
 		returnedValue, err = c.ExecuteGet(key)
-
+	
 		if err != nil {
 			os.Stderr.WriteString("Failed to find key: ["+key+"]\n")
 		}
@@ -79,6 +79,7 @@ func main(){
 
 	if err != nil {
 		utils.Sugar.Error("Command failed")
+		os.Stderr.WriteString(err.Error()+"\n")
 		os.Exit(2)
 	}
 

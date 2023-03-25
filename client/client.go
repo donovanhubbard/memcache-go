@@ -32,6 +32,12 @@ func (c Client) setupConnection() (net.Conn, error) {
 
 func (c Client) ExecuteSet(key string, flags int, expiry int, value string) error {
 	utils.Sugar.Debugf("starting ExecuteSet: key:[%s] flags:[%d] expiry:[%d] value:[%s]\n",key,flags,expiry,value)
+
+	if key == "" || flags < 0 || expiry < 0 {
+		utils.Sugar.Debug("Invalid argument(s)")
+		return errors.New("invalid arguments")
+	}
+
 	conn, err := c.setupConnection()
 	
 	if err != nil {
