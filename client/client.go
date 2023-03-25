@@ -31,7 +31,7 @@ func (c Client) setupConnection() (net.Conn, error) {
 }
 
 func (c Client) ExecuteSet(key string, flags int, expiry int, value string) error {
-	utils.Sugar.Debug("starting ExecuteSet: key:[%s] flags:[%d] expiry:[%d] value:[%s]\n",key,flags,expiry,value)
+	utils.Sugar.Debugf("starting ExecuteSet: key:[%s] flags:[%d] expiry:[%d] value:[%s]\n",key,flags,expiry,value)
 	conn, err := c.setupConnection()
 	
 	if err != nil {
