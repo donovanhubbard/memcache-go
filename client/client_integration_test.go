@@ -33,14 +33,10 @@ func TestGet(t *testing.T) {
 	testKey := fmt.Sprintf("%s.%s", NAMESPACE, "testing.foo2")
 	value = "bar"
 
-	retreivedValue, err = c.ExecuteGet(testKey)
+	_, err = c.ExecuteGet(testKey)
 
-	if err.Error() != "specified key not found" {
+	if err == nil || err.Error() != "specified key not found" {
 		t.Fatalf("Failed to execute the first get. %s", err)
-	}
-
-	if retreivedValue != "" {
-		t.Fatalf("Got wrong value from a get. Should be empty string but got %s", retreivedValue)
 	}
 
 	err = c.ExecuteSet(testKey, 0, EXPIRATION, value)
@@ -57,5 +53,32 @@ func TestGet(t *testing.T) {
 
 	if value != retreivedValue {
 		t.Fatalf("Got wrong value from a get. Should be %s but got %s", value, retreivedValue)
+	}
+}
+
+func TestDelete(t *testing.T) {
+	var value string
+	var err error
+	utils.InitializeLogger()
+	c := generateClient()
+	testKey := fmt.Sprintf("%s.%s", NAMESPACE, "testing.foo3")
+	value = "bar"
+
+	err = c.ExecuteSet(testKey, 0, EXPIRATION, value)
+
+	if err != nil {
+		t.Fatalf("Failed to set key to memcached. %s", err)
+	}
+
+	err = c.ExecuteDelete(testKey)
+
+	if err != nil {
+		t.Fatalf("Delete failed. %s", err.Error())
+	}
+
+	_, err = c.ExecuteGet(testKey)
+
+	if err == nil || err.Error() != "specified key not found" {
+		t.Fatalf("Retrieved value for %s when it should be deleted. %s", testKey, err)
 	}
 }
