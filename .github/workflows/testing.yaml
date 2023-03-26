@@ -4,10 +4,18 @@ on:
     branches:
       - main
 jobs:
-  check-bats-version:
+  formatting:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - run: go fmt client/*
       - run: go fmt cmd/*
       - run: go fmt utils/*
+  automated-testing:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: setup memcache
+        run: docker run -d -p 11211:11211 memcached:alpine
+      - name: integration-test
+        run: LOG_LEVEL=debug go test -v github.com/donovanhubbard/memcache-go/client

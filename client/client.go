@@ -103,7 +103,7 @@ func (c Client) ExecuteGet(key string) (string, error) {
 		return "", err
 	}
 
-	if response == "END" {
+	if strings.TrimSpace(response) == "END" {
 		utils.Sugar.Error("Failed to find the specified key")
 		return "", errors.New("specified key not found")
 	}
