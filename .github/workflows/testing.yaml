@@ -1,20 +1,16 @@
-name: Automated-Testing
+name: Automated-Pipeline
 on:
   push:
     branches:
       - main
 jobs:
-  formatting:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - run: go fmt client/*
-      - run: go fmt cmd/*
-      - run: go fmt utils/*
   automated-testing:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4.0.0
+        with:
+          go-version: '1.20'
       - name: setup memcache
         run: docker run -d -p 11211:11211 memcached:alpine
       - name: integration-test
